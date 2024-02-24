@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//Any Debug.Log code is used for debugging and seeing any info that can't be seen when the preview of the game is running
+//Any Debug.Log code is used for debugging and seeing any info that can't be seen when the preview of the game is running. That info is sent to the console
 /*
     Piece values:
     1 = Pawn
@@ -20,44 +20,40 @@ using UnityEngine;
 public class ChessBot9 : MonoBehaviour
 {
     [SerializeField] int WinStreak;
-    [SerializeField] bool VeryDrunkMode;
-    [SerializeField] float NextNewPrefab;
-    [SerializeField] float CenterImportanceMult;
-    [SerializeField] float MaterialMultiplier;
-    [SerializeField] float SpecialPeiceMoveReward;
-    [SerializeField] int[] WinStreakSave = new int[100];
-    [SerializeField] float[,] CenterImportanceMultSave = new float[100, 64];
-    [SerializeField] float[,] MaterialMultiplierSave = new float[100, 64];
-    [SerializeField] float[,] SpecialPeiceMoveRewardSave = new float[100, 64];
-    [SerializeField] float[] PawnMaterialBoard = new float[64];
-    [SerializeField] float[] KnightMaterialBoard = new float[64];
-    [SerializeField] float[] BishopMaterialBoard = new float[64];
-    [SerializeField] float[] RookMaterialBoard = new float[64];
-    [SerializeField] float[] QueenMaterialBoard = new float[64];
-    [SerializeField] float[] KingMaterialBoard = new float[64];
+    [SerializeField] int Wins;
+    [SerializeField] int Losses;
+    [SerializeField] int ChosenPrefab;
+    public int NextOpenPrefab;
+    [SerializeField] int[] WinstreakSave = new int[100];
+    [SerializeField] int[] TotalWinsSave = new int[100];
+    [SerializeField] float[] CenterImportanceMultSave = new float[100];
+    [SerializeField] float[] MaterialMultiplierSave = new float[100];
+    [SerializeField] float[] SpecialPeiceMoveRewardSave = new float[100];
     [SerializeField] float[,] PawnMaterialBoardSave = new float[100, 64];
     [SerializeField] float[,] KnightMaterialBoardSave = new float[100, 64];
     [SerializeField] float[,] BishopMaterialBoardSave = new float[100, 64];
     [SerializeField] float[,] RookMaterialBoardSave = new float[100, 64];
     [SerializeField] float[,] QueenMaterialBoardSave = new float[100, 64];
     [SerializeField] float[,] KingMaterialBoardSave = new float[100, 64];
+    [SerializeField] bool VeryDrunkMode;
+    [SerializeField] float CenterImportanceMult;
+    [SerializeField] float MaterialMultiplier;
+    [SerializeField] float SpecialPeiceMoveReward;
+    [SerializeField] float[] PawnMaterialBoard = new float[64];
+    [SerializeField] float[] KnightMaterialBoard = new float[64];
+    [SerializeField] float[] BishopMaterialBoard = new float[64];
+    [SerializeField] float[] RookMaterialBoard = new float[64];
+    [SerializeField] float[] QueenMaterialBoard = new float[64];
+    [SerializeField] float[] KingMaterialBoard = new float[64];
     [SerializeField] int MaxDepth;
     [SerializeField] GameObject BoardManagerObj;
-    [SerializeField] int BestMoveX;
-    [SerializeField] int BestMoveY;
     [SerializeField] float BestEvalScore;
-    [SerializeField] int ReferenceX;
-    [SerializeField] int ReferenceY;
-    [SerializeField] int PotentialX;
-    [SerializeField] int PotentialY;
     [SerializeField] int KingPosX;
     [SerializeField] int KingPosY;
     [SerializeField] int QueenPosX;
     [SerializeField] int QueenPosY;
     [SerializeField] int[] TypeList = new int[16];
-    [SerializeField] bool IsOn;
     [SerializeField] int Side;
-    [SerializeField] int[] Value = new int[11];
     private GameObject[,] CurrentObjBoard = new GameObject[8, 8];
     private int[,,] CurrentIntBoard = new int[8, 8, 16];
     private int[,] CurrentHeatBoard = new int[8, 8];
@@ -65,9 +61,48 @@ public class ChessBot9 : MonoBehaviour
     private int[,,] CheckingIntBoard = new int[8, 8, 16];
     private int[,] CheckingHeatBoard = new int[8, 8];
     private int[,] CheckingSideBoard = new int[8, 8];
-    [SerializeField] int BoardMoveCount;
-    [SerializeField] float[] MoveData = new float[3];
     [SerializeField] bool[,] CanMoveHereData = new bool[7, 7];
+    [SerializeField] int PastXPos;
+    [SerializeField] int PastYPos;
+
+    public void PrintInfo(){
+        Debug.Log("Center: "+ CenterImportanceMult +" Material: "+ MaterialMultiplier +" Special piece: "+ SpecialPeiceMoveReward);
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("Pawn: "+ PawnMaterialBoard[0 * i] + " " + PawnMaterialBoard[1 * i] + " "+ PawnMaterialBoard[2 * i] + " "+ PawnMaterialBoard[3 * i] + " " + PawnMaterialBoard[4 * i] + " " + PawnMaterialBoard[5 * i] + " "+ PawnMaterialBoard[6 * i]);
+        }
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("Knight: "+ KnightMaterialBoard[0 * i] + " " + KnightMaterialBoard[1 * i] + " "+ KnightMaterialBoard[2 * i] + " "+ KnightMaterialBoard[3 * i] + " " + KnightMaterialBoard[4 * i] + " " + KnightMaterialBoard[5 * i] + " "+ KnightMaterialBoard[6 * i]);
+        }
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("Bishop: "+ BishopMaterialBoard[0 * i] + " " + BishopMaterialBoard[1 * i] + " "+ BishopMaterialBoard[2 * i] + " "+ BishopMaterialBoard[3 * i] + " " + BishopMaterialBoard[4 * i] + " " + BishopMaterialBoard[5 * i] + " "+ BishopMaterialBoard[6 * i]);
+        }
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("Rook: "+ RookMaterialBoard[0 * i] + " " + RookMaterialBoard[1 * i] + " "+ RookMaterialBoard[2 * i] + " "+ RookMaterialBoard[3 * i] + " " + RookMaterialBoard[4 * i] + " " + RookMaterialBoard[5 * i] + " "+ RookMaterialBoard[6 * i]);
+        }
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("Queen: "+ QueenMaterialBoard[0 * i] + " " + QueenMaterialBoard[1 * i] + " "+ QueenMaterialBoard[2 * i] + " "+ QueenMaterialBoard[3 * i] + " " + QueenMaterialBoard[4 * i] + " " + QueenMaterialBoard[5 * i] + " "+ QueenMaterialBoard[6 * i]);
+        }
+        for (int i = 1; i <= 7; i++){
+            Debug.Log("King: "+ KingMaterialBoard[0 * i] + " " + KingMaterialBoard[1 * i] + " "+ KingMaterialBoard[2 * i] + " "+ KingMaterialBoard[3 * i] + " " + KingMaterialBoard[4 * i] + " " + KingMaterialBoard[5 * i] + " "+ KingMaterialBoard[6 * i]);
+        }
+    }
+
+    public void ResetWins(){
+        WinStreak = 0;
+    }
+
+    public void AddWins(){
+        WinStreak += 1;
+    }
+
+    public void AddChamWins(){
+        Wins++;
+        TotalWinsSave[ChosenPrefab]++;
+    }
+
+    public void AddChamLoss(){
+        Losses += 1;
+    }
 
     //Sets the board that the bot is playing on
     public void SetBoard(GameObject Board){
@@ -125,23 +160,6 @@ public class ChessBot9 : MonoBehaviour
                 CopySideBoard[y, x] = CopiedSideBoard[y, x];
             }
         }
-    }
-
-    //Clears the MoveHereData list that's used to stop running moves that were already checked
-    public void ClearMoveHereData(){
-        for (int y = 0; y <= 7; y++){
-            for (int x = 0; x <= 7; x++){
-                CanMoveHereData[y, x] = true;
-            }
-        }
-    }
-
-    public GameObject GetUsedBoard(){
-        return BoardManagerObj;
-    }
-
-    public int GetSide(){
-        return Side;
     }
 
     //Returns the amount of material that the piece on the given coordinates is worth
@@ -207,6 +225,14 @@ public class ChessBot9 : MonoBehaviour
         }
     }
 
+    public int GetSide(){
+        return Side;
+    }
+
+    public GameObject GetUsedBoard(){
+        return BoardManagerObj;
+    }
+
     //Checks if the piece on the give coordinates has the given type and if found returns true. If not found it returns false
     public bool HasType(int type, int x, int y, int[,,] AnalyzedIntBoard){
         for (int t = 0; t <= 15; t++){
@@ -217,11 +243,36 @@ public class ChessBot9 : MonoBehaviour
         return false;
     }
 
+    public int GetWinstreak(){
+        return WinStreak;
+    }
+
     public float[] RandomizeMaterialBoard(float[] RandomBoard){
         for (int i = 0; i <= 63; i++){
             RandomBoard[i] = Random.Range(-10f, 10f);
         }
         return RandomBoard;
+    }
+
+    public void SavePrefab(){
+        WinstreakSave[NextOpenPrefab] = WinStreak;
+        CenterImportanceMultSave[NextOpenPrefab] = CenterImportanceMult;
+        MaterialMultiplierSave[NextOpenPrefab] = MaterialMultiplier;
+        SpecialPeiceMoveRewardSave[NextOpenPrefab] = SpecialPeiceMoveReward;
+        for (int i = 0; i <= 63; i++){
+            PawnMaterialBoardSave[NextOpenPrefab, i] = PawnMaterialBoard[i];
+            KnightMaterialBoardSave[NextOpenPrefab, i] = KnightMaterialBoard[i];
+            BishopMaterialBoardSave[NextOpenPrefab, i] = BishopMaterialBoard[i];
+            RookMaterialBoardSave[NextOpenPrefab, i] = RookMaterialBoard[i];
+            QueenMaterialBoardSave[NextOpenPrefab, i] = QueenMaterialBoard[i];
+            KingMaterialBoardSave[NextOpenPrefab, i] = KingMaterialBoard[i];
+        }
+        Debug.Log(PawnMaterialBoardSave[NextOpenPrefab, 0]);
+        NextOpenPrefab++;
+    }
+
+    public int GetCurrentPrefabNum(){
+        return NextOpenPrefab;
     }
 
     /*
@@ -230,7 +281,7 @@ public class ChessBot9 : MonoBehaviour
     */
     //Evaluates the given position and returns the evaluation assigned to the position
     public float EvaluateBoard(int[,,] AnalyzedIntBoard, int[,] AnalyzedSideBoard, int pastX, int pastY, int CurX, int CurY){
-        Debug.Log("Side given to Evaluation: "+ Side);
+        //Debug.Log("Side given to Evaluation: "+ Side);
         float SideChanger = 0.0f;
         if (Side == 1){
             SideChanger = 1f;
@@ -306,11 +357,11 @@ public class ChessBot9 : MonoBehaviour
         }
         Total += MaterialTotal * (MaterialMultiplier * SideChanger);
         if (QueenLost == true){
-            Debug.Log("Queen Lost");
+            //Debug.Log("Queen Lost");
             Total += -999999999f * SideChanger;
         }
         if (KingLost == true){
-            Debug.Log("King Lost");
+            //Debug.Log("King Lost");
             Total += -99999999999999f * SideChanger;
         }
         if (EQueenLost == true){
@@ -321,22 +372,27 @@ public class ChessBot9 : MonoBehaviour
             //Debug.Log("Enemy King Lost");
             Total += 999999999999999999f * SideChanger;
         }
+        if (PastXPos == CurX && PastYPos == CurY){
+            Total += -9999999999 * SideChanger;
+        }
         float PieceControl = 0f;
         PieceControl = WhiteControl + BlackControl;
         PieceControl = PieceControl / 64;
         Total += PieceControl;
         AverageControl = AverageControl / 64;
         Total += AverageControl;
-        Debug.Log("The Total evaluation is: "+ Total +" At a pos of: ("+ pastX +", "+ pastY +") to the position ("+ CurX +", "+ CurY +")");
+        //Debug.Log("The Total evaluation is: "+ Total +" At a pos of: ("+ pastX +", "+ pastY +") to the position ("+ CurX +", "+ CurY +")");
         return Total;
     }
 
     //Moves the chosen piece on x & y to the position dx & dy on the actual board being played on
     public void MoveOnPlayerBoard(int x, int y, int dx, int dy){
-        Debug.Log("Moved Piece on ("+ x +", "+ y +") to ("+ dx + ", "+ dy +")");
+        //Debug.Log("Moved Piece on ("+ x +", "+ y +") to ("+ dx + ", "+ dy +")");
         GameObject Dot = BoardManagerObj.GetComponent<BoardManager>().GetDot(dy, dx);
         BoardManagerObj.GetComponent<BoardManager>().ChangeCurrentPiece(y, x);
         BoardManagerObj.GetComponent<BoardManager>().MovePiece(Dot);
+        PastXPos = x;
+        PastYPos = y;
     }
 
     //Moves the chosen piece on the given sideboard and returns it
@@ -386,15 +442,15 @@ public class ChessBot9 : MonoBehaviour
             ChangedIntBoard[y, x, c] = 0;
         }
         if (HasType(2, dx, dy, ChangedIntBoard) == true || HasType(7, dx, dy, ChangedIntBoard) == true){
-            Debug.Log("We're in for knight");
+            //Debug.Log("We're in for knight");
             if (x + 2 <= 7 && (x + 2 == dx && y + 1 == dy) || (x + 2 == dx && y - 1 == dy)){
-                Debug.Log("X: "+ x +" Y: "+ y);
+                //Debug.Log("X: "+ x +" Y: "+ y);
                 for (int i = 0; i <= 15; i++){
                     ChangedIntBoard[y, x + 1, i] = 0;
                     ChangedIntBoard[y, x + 2, i] = 0;
                 }
             }else if ( x - 2 >= 0 && ((y + 1 <= 7 && x - 2 == dx && y + 1 == dy) || (y - 1 >= 0 && x - 2 == dx && y - 1 == dy))){
-                Debug.Log("X2: "+ x +" Y: "+ y);
+                //Debug.Log("X2: "+ x +" Y: "+ y);
                 for (int i = 0; i <= 15; i++){
                     ChangedIntBoard[y, x - 1, i] = 0;
                     ChangedIntBoard[y, x - 2, i] = 0;
@@ -452,7 +508,7 @@ public class ChessBot9 : MonoBehaviour
                 //Debug.Log("Current created square: ("+ t +", "+ i +") Piece: "+ CurrentIntBoard[i, t, 0] +" Side: "+ CurrentSideBoard[i, t]);
             }
         }
-        Debug.Log("Board Created");
+        //Debug.Log("Board Created");
         /*for (int y = 0; y <= 7; y++){
             for (int x = 0; x <= 7; x++){
                 Debug.Log(CurrentSideBoard[y, x]);
@@ -1305,8 +1361,8 @@ public class ChessBot9 : MonoBehaviour
             1- The X coordinate where you move the piece
             2- The Y coordinate where you move the piece
         */
-        Debug.Log("Running a new piece search");
-        Debug.Log("Current Side: "+ Side);
+        //Debug.Log("Running a new piece search");
+        //Debug.Log("Current Side: "+ Side);
         //Debug.Log("PreKingMove: "+ AnalyzedSideBoard[6, 5]);
         int[,,] UsedIntBoard = new int[8, 8, 16];
         int[,] UsedSideBoard = new int[8, 8];
@@ -1568,19 +1624,18 @@ public class ChessBot9 : MonoBehaviour
                         SentData[1] = x - 1;
                     }
                 }
-                Debug.Log("Knight: Position of Checked Piece: ("+ x +", "+ y +") Sent Data to pos: ("+ SentData[1] +", "+ SentData[2] +")");
+                //Debug.Log("Knight: Position of Checked Piece: ("+ x +", "+ y +") Sent Data to pos: ("+ SentData[1] +", "+ SentData[2] +")");
                 return SentData;
             }
             //Bishop Logic Code:
             else if (AnalyzedIntBoard[y, x, m] == 3){
                     for (int i = 1; i <= 7; i++){
-                        if (y + i <= 7 && x + i <= 7 && CanMoveHereData[y, x] == true && AnalyzedSideBoard[y + i, x + i] == 0){
+                        if (y + i <= 7 && x + i <= 7 && AnalyzedSideBoard[y + i, x + i] == 0){
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
-                            CanMoveHereData[y + i, x + i] = false;
                             if (Evaluation > SentData[0] && Side == 1){
                                 SentData[0] = Evaluation;
                                 SentData[2] = y + i;
@@ -1711,7 +1766,7 @@ public class ChessBot9 : MonoBehaviour
                             }
                             break;
                         }else if (y + (i * -1) >= 0 && x + i <= 7 && AnalyzedSideBoard[y + (i * -1), x + i] == AnalyzedSideBoard[y, x] && HasType(5, x + i, y  + (i * -1), AnalyzedIntBoard) == false && HasType(6, x + i, y + (i * -1), AnalyzedIntBoard) == false && HasType(AnalyzedIntBoard[y + (i * -1), x + i, 0], x, y, AnalyzedIntBoard) == false){
-                            Debug.Log("hello");
+                            //Debug.Log("hello");
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + (i * -1));
@@ -1784,7 +1839,7 @@ public class ChessBot9 : MonoBehaviour
                             break;
                         }
                     }
-                    Debug.Log("Bishop: Position of Checked Piece: ("+ x +", "+ y +")");
+                    //Debug.Log("Bishop: Position of Checked Piece: ("+ x +", "+ y +")");
                     return SentData;
             }
             //Rook Logic Code:
@@ -2000,7 +2055,7 @@ public class ChessBot9 : MonoBehaviour
                     }
                     
                 }
-                Debug.Log("Rook: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Rook: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Pawn Logic Code:
@@ -2064,7 +2119,6 @@ public class ChessBot9 : MonoBehaviour
                             SentData[1] = x - 1;
                         }
                     }
-                    Debug.Log("Ran White Pawn Code");
                     return SentData;
                 }
                 if (AnalyzedSideBoard[y, x] == 2){
@@ -2134,10 +2188,9 @@ public class ChessBot9 : MonoBehaviour
                             SentData[1] = x - 1;
                         }
                     }
-                    Debug.Log("Ran Black Pawn Code");
                     return SentData;
                 }
-                Debug.Log("Pawn: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Pawn: Position of Checked Piece: ("+ x +", "+ y +")");
             }
             //Queen Logic Code:
             else if (AnalyzedIntBoard[y, x, m] == 5){
@@ -2146,13 +2199,12 @@ public class ChessBot9 : MonoBehaviour
                     int i = 0;
                     while (loop == true){
                         i++;
-                        if (y + i <= 7 && x + i <= 7 && CanMoveHereData[y, x] == true && AnalyzedSideBoard[y + i, x + i] == 0){
+                        if (y + i <= 7 && x + i <= 7 && AnalyzedSideBoard[y + i, x + i] == 0){
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
-                            CanMoveHereData[y + i, x + i] = false;
                             if (Evaluation > SentData[0] && Side == 1){
                                 SentData[0] = Evaluation;
                                 SentData[2] = y + i;
@@ -2186,7 +2238,7 @@ public class ChessBot9 : MonoBehaviour
                     loop = true;
                     while (loop == true){
                         i++;
-                        if (y + i <= 7 && x + (i * -1) >= 0 && CanMoveHereData[y, x] == true && AnalyzedSideBoard[y + i, x + (i * -1)] == 0){
+                        if (y + i <= 7 && x + (i * -1) >= 0 && AnalyzedSideBoard[y + i, x + (i * -1)] == 0){
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + (i * -1), y + i);
@@ -2321,7 +2373,6 @@ public class ChessBot9 : MonoBehaviour
                             SentData[1] = x;
                         }
                     }else */if (y + i <= 7 && AnalyzedSideBoard[y + i, x] != AnalyzedSideBoard[y, x]){
-                        Debug.Log("We're in");
                         CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                         CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                         AnalyzedIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + i);
@@ -2352,7 +2403,6 @@ public class ChessBot9 : MonoBehaviour
                         AnalyzedIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + (i * -1));
                         AnalyzedSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + (i * -1));
                         Evaluation = EvaluateBoard(AnalyzedIntBoard, AnalyzedSideBoard, x, y, x, y + (i * -1));
-                        CanMoveHereData[y + (i * -1), x] = false;
                         if (Evaluation > SentData[0] && Side == 1){
                             SentData[0] = Evaluation;
                             SentData[2] = y + (i * -1);
@@ -2462,11 +2512,11 @@ public class ChessBot9 : MonoBehaviour
                     }
                     
                 }
-                Debug.Log("Queen: Position of checked piece: ("+ x +", "+ y +")");
+                //Debug.Log("Queen: Position of checked piece: ("+ x +", "+ y +")");
             }
             //King Logic Code:
             else if (AnalyzedIntBoard[y, x, m] == 6){
-                Debug.Log("PostKingMove: "+ AnalyzedSideBoard[6, 5]);
+                //Debug.Log("PostKingMove: "+ AnalyzedSideBoard[6, 5]);
                 if (y + 1 <= 7 && AnalyzedSideBoard[y + 1, x] != Side){
                     CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                     CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
@@ -2595,7 +2645,7 @@ public class ChessBot9 : MonoBehaviour
                         SentData[1] = x - 1;
                     }
                 }
-                Debug.Log("King: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("King: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Amazon Logic Code:
@@ -2730,13 +2780,12 @@ public class ChessBot9 : MonoBehaviour
                 }
                 //Diagonal Logic code
                     for (int i = 1; i <= 7; i++){
-                        if (y + i <= 7 && x + i <= 7 && CanMoveHereData[y, x] == true && AnalyzedSideBoard[y + i, x + i] == 0){
+                        if (y + i <= 7 && x + i <= 7 && AnalyzedSideBoard[y + i, x + i] == 0){
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
                             Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x + i, y + i);
-                            CanMoveHereData[y + i, x + i] = false;
                             if (Evaluation > SentData[0] && Side == 1){
                                 SentData[0] = Evaluation;
                                 SentData[2] = y + i;
@@ -2767,7 +2816,7 @@ public class ChessBot9 : MonoBehaviour
                         }
                     }
                     for (int i = 1; i <= 7; i++){
-                        if (y + i <= 7 && x + (i * -1) >= 0 && CanMoveHereData[y, x] == true && AnalyzedSideBoard[y + i, x + (i * -1)] == 0){
+                        if (y + i <= 7 && x + (i * -1) >= 0 && AnalyzedSideBoard[y + i, x + (i * -1)] == 0){
                             CopyIntBoard(AnalyzedIntBoard, CheckingIntBoard);
                             CopySideBoard(AnalyzedSideBoard, CheckingSideBoard);
                             CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + (i * -1), y + i);
@@ -2919,7 +2968,6 @@ public class ChessBot9 : MonoBehaviour
                         CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + (i * -1));
                         CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + (i * -1));
                         Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x, y + (i * -1));
-                        CanMoveHereData[y + (i * -1), x] = false;
                         if (Evaluation > SentData[0] && Side == 1){
                             SentData[0] = Evaluation;
                             SentData[2] = y + (i * -1);
@@ -3022,7 +3070,7 @@ public class ChessBot9 : MonoBehaviour
                         break;
                     }
                 }
-                Debug.Log("Amazon: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Amazon: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Portal Thief 1 Logic Code:
@@ -3033,7 +3081,6 @@ public class ChessBot9 : MonoBehaviour
                     CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + 1);
                     CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y + 1);
                     Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x, y + 1);
-                    CanMoveHereData[y + 1, x] = false;
                     if (Evaluation > SentData[0] && Side == 1){
                         SentData[0] = Evaluation;
                         SentData[2] = y + 1;
@@ -3066,7 +3113,6 @@ public class ChessBot9 : MonoBehaviour
                     CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
                     CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
                     Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
-                    CanMoveHereData[y - 1, x] = false;
                     if (Evaluation > SentData[0] && Side == 1){
                         SentData[0] = Evaluation;
                         SentData[2] = y - 1;
@@ -3082,7 +3128,6 @@ public class ChessBot9 : MonoBehaviour
                     CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
                     CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
                     Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x, y - 1);
-                    CanMoveHereData[y - 1, x] = false;
                     if (Evaluation > SentData[0] && Side == 1){
                         SentData[0] = Evaluation;
                         SentData[2] = y - 1;
@@ -3093,7 +3138,7 @@ public class ChessBot9 : MonoBehaviour
                         SentData[1] = x;
                     }
                 }
-                Debug.Log("Portal Thief 1: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Portal Thief 1: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Portal Thief 2 Logic Code
@@ -3120,7 +3165,6 @@ public class ChessBot9 : MonoBehaviour
                     CheckingIntBoard = MoveIntPiece(CheckingIntBoard, CheckingSideBoard, x, y, x + 1, y + 1);
                     CheckingSideBoard = MoveSidePiece(CheckingIntBoard, CheckingSideBoard, x, y, x + 1, y + 1);
                     Evaluation = EvaluateBoard(CheckingIntBoard, CheckingSideBoard, x, y, x + 1, y + 1);
-                    CanMoveHereData[y + 1, x + 1] = false;
                     if (Evaluation > SentData[0] && Side == 1){
                         SentData[0] = Evaluation;
                         SentData[2] = y + 1;
@@ -3227,7 +3271,7 @@ public class ChessBot9 : MonoBehaviour
                         SentData[1] = x - 1;
                     }
                 }
-                Debug.Log("Portal Thief 2: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Portal Thief 2: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Portal Thief 3 Logic Code:
@@ -3425,7 +3469,7 @@ public class ChessBot9 : MonoBehaviour
                         }
                     }
                 }
-                Debug.Log("Portal Thief 3: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Portal Thief 3: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }
             //Smiler Logic Code
@@ -3814,13 +3858,13 @@ public class ChessBot9 : MonoBehaviour
                         SentData[1] = x - 4;
                     }
                 }
-                Debug.Log("Smiler: Position of Checked Piece: ("+ x +", "+ y +")");
+                //Debug.Log("Smiler: Position of Checked Piece: ("+ x +", "+ y +")");
                 return SentData;
             }else{
                 //Debug.Log("No Correct Piece found Pos: (" + x +", "+ y +")");
             }
             }
-        Debug.Log("Didn't find a piece. Piece number given: "+ AnalyzedIntBoard[y, x, m]);
+        //Debug.Log("Didn't find a piece. Piece number given: "+ AnalyzedIntBoard[y, x, m]);
         if (Side == 1 && AnalyzedIntBoard[y, x, m] == 0){
             SentData[0] = -9999999999999999999999f;
         }else if (Side == 2 && AnalyzedIntBoard[y, x, m] == 0){
@@ -4927,8 +4971,8 @@ public class ChessBot9 : MonoBehaviour
     }
 
     public float[] RunDepthScan(int[,,] UsedIntBoard, int[,] UsedSideBoard, int CurrentDepth, int GivenSide){
-        Debug.Log("___________________New Depth Iteration___________________");
-        Debug.Log("Depth Test: "+ UsedIntBoard[1, 3, 0]);
+        //Debug.Log("___________________New Depth Iteration___________________");
+        //Debug.Log("Depth Test: "+ UsedIntBoard[1, 3, 0]);
         float[] ReturnInfo = new float[5];
         float[] BackInfo = new float[5];
         float[] GivenInfo = new float[3];
@@ -4950,8 +4994,8 @@ public class ChessBot9 : MonoBehaviour
             ReturnInfo[2] = 0;
             ReturnInfo[3] = 0;
             ReturnInfo[4] = 0;
-            Debug.Log("At end of branch. Returning eval of "+ ReturnInfo[0]);
-            Debug.Log("___________________End of Depth Iteration Branch___________________");
+            //Debug.Log("At end of branch. Returning eval of "+ ReturnInfo[0]);
+            //Debug.Log("___________________End of Depth Iteration Branch___________________");
         }else{
             if (GivenSide == 1){
                 ReturnInfo[0] = -99999999999999999;
@@ -4990,7 +5034,7 @@ public class ChessBot9 : MonoBehaviour
                                     IsPossible = false;
                                 }
                                 Side = TempSide;
-                                Debug.Log("Now Side: "+ Side);
+                                //Debug.Log("Now Side: "+ Side);
                                 if (IsPossible == true && BackInfo[0] >= ReturnInfo[0] && GivenSide == 1){
                                     ReturnInfo[0] = BackInfo[0];
                                     ReturnInfo[1] = x;
@@ -5003,15 +5047,15 @@ public class ChessBot9 : MonoBehaviour
                                     ReturnInfo[2] = y;
                                     ReturnInfo[3] = GivenInfo[1];
                                     ReturnInfo[4] = GivenInfo[2];
-                                    Debug.Log("Position: ("+ x +", "+ y +") to ("+ ReturnInfo[3] +", "+ ReturnInfo[4] +") With an evaluation of "+ ReturnInfo[0]);
+                                    //Debug.Log("Position: ("+ x +", "+ y +") to ("+ ReturnInfo[3] +", "+ ReturnInfo[4] +") With an evaluation of "+ ReturnInfo[0]);
                                 }
                             }
                         }
                     }
                 }
             }
-            Debug.Log("Info sending back: Depth: "+ CurrentDepth +" Eval: "+ ReturnInfo[0] +" Starting pos: ("+ ReturnInfo[1] +", "+ ReturnInfo[2] +") Ending pos: ("+ ReturnInfo[3] +", "+ ReturnInfo[4] +")");
-            Debug.Log("___________________End of Depth Iteration___________________");
+            //Debug.Log("Info sending back: Depth: "+ CurrentDepth +" Eval: "+ ReturnInfo[0] +" Starting pos: ("+ ReturnInfo[1] +", "+ ReturnInfo[2] +") Ending pos: ("+ ReturnInfo[3] +", "+ ReturnInfo[4] +")");
+            //Debug.Log("___________________End of Depth Iteration___________________");
         }
         return ReturnInfo;
     }
@@ -5086,10 +5130,24 @@ public class ChessBot9 : MonoBehaviour
     // Start is called before the first frame update
     void Start(){
         RandomizeEvalValues();
+        Debug.Log(PawnMaterialBoardSave[ChosenPrefab, 0]);
     }
 
     // Update is called once per frame
     void Update(){
-        
+        if (ChosenPrefab != 0){
+            WinStreak = WinstreakSave[ChosenPrefab];
+            CenterImportanceMult = CenterImportanceMultSave[ChosenPrefab];
+            MaterialMultiplier = MaterialMultiplierSave[ChosenPrefab];
+            SpecialPeiceMoveReward = SpecialPeiceMoveRewardSave[ChosenPrefab];
+            for (int i = 0; i <= 63; i ++){
+                PawnMaterialBoard[i] = PawnMaterialBoardSave[ChosenPrefab, i];
+                KnightMaterialBoard[i] = KnightMaterialBoardSave[ChosenPrefab, i];
+                BishopMaterialBoard[i] = BishopMaterialBoardSave[ChosenPrefab, i];
+                RookMaterialBoard[i] = RookMaterialBoardSave[ChosenPrefab, i];
+                QueenMaterialBoard[i] = QueenMaterialBoardSave[ChosenPrefab, i];
+                KingMaterialBoard[i] = KingMaterialBoardSave[ChosenPrefab, i];
+            }
+        }
     }
 }
